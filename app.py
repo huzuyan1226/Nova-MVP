@@ -128,7 +128,7 @@ for m in st.session_state.messages[1:]:
 
 # ---------- 灵魂档案展示 ----------
 if "soul_entries" in st.session_state and st.session_state.soul_entries:
-    st.markdown("### 📖 已保存的灵魂片段")
+    st.markdown("## 📖 已保存的灵魂片段")
     for e in st.session_state.soul_entries[::-1]:  # 倒序显示，最新的在前面
         st.markdown(f"**{e['time']}**  \n{e['text']}")
 
