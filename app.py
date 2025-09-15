@@ -126,6 +126,12 @@ for m in st.session_state.messages[1:]:
     with st.chat_message("assistant" if m["role"] == "assistant" else "user"):
         st.markdown(m["content"])
 
+# ---------- 灵魂档案展示 ----------
+if "soul_entries" in st.session_state and st.session_state.soul_entries:
+    st.markdown("### 📖 已保存的灵魂片段")
+    for e in st.session_state.soul_entries[::-1]:  # 倒序显示，最新的在前面
+        st.markdown(f"**{e['time']}**  \n{e['text']}")
+
 # ---------- 发送消息 ----------
 user = st.chat_input("把此刻的心跳，交给星空中的回应…")
 if user:
@@ -225,7 +231,7 @@ if user:
         st.session_state.messages.append({"role": "assistant", "content": acc_text})
 
 # ---------- 灵魂档案表单 ----------
-st.markdown("### 🌌 留下你的灵魂片段")
+st.markdown("### 💙 留下你的灵魂片段")
 
 with st.form("soul_entry", clear_on_submit=True):
     soul_text = st.text_area("写下此刻你想留给星空的话语…", height=100)
