@@ -125,7 +125,6 @@ st.markdown("""
 
 <div class="nova-hero">
   <div style="font-size:20px;font-weight:600;">
-    ✨ Nova Whisper Cosmos
   </div>
   <div style="opacity:.85;margin-top:4px">
     用一点点宇宙的静谧，接住你现在的心跳。
