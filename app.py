@@ -91,26 +91,62 @@ if user:
         acc_text = ""
 
         try:
-            if use_stream:
-                # ——流式（可能偶发乱码）——
-                with requests.post(url, headers=headers,
-                                   json={**base_payload, "stream": True},
-                                   stream=True, timeout=300) as r:
-                    if r.status_code != 200:
-                        body = r.text[:2000]
-                        placeholder.error(f"HTTP {r.status_code}\n{body}")
-                        raise RuntimeError(f"HTTP {r.status_code}")
+                       if use_stream:
+                # ——更健壮的流式解析（忽略 reasoning，兼容多种返回结构）——
+                with requests.post(
+                    url,
+                    headers=headers,
+                    json={**base_payload, "stream": True},
+                    stream=True,
+                    timeout=300,
+                ) as r:
+                    r.raise_for_status()
+                    r.encoding = "utf-8"  # 强制按 utf-8 解析，防止中文半字符
                     for raw in r.iter_lines(decode_unicode=True):
-                        if not raw or not raw.startswith("data: "):
+                        if not raw:
                             continue
-                        data = raw[6:]
+
+                        # 只处理标准 SSE 数据行
+                        if not raw.startswith("data: "):
+                            continue
+                        data = raw[6:].strip()
+
+                        # 结束标记
                         if data == "[DONE]":
                             break
-                        obj = json.loads(data)
-                        delta = obj.get("choices", [{}])[0].get("delta", {}).get("content")
+
+                        try:
+                            obj = json.loads(data)
+                        except Exception:
+                            # 非法 JSON（偶发），跳过
+                            continue
+
+                        # 1) OpenAI/DeepSeek 兼容：choices[].delta.content
+                        delta = (
+                            obj.get("choices", [{}])[0]
+                               .get("delta", {})
+                               .get("content")
+                        )
                         if delta:
                             acc_text += delta
                             placeholder.markdown(acc_text)
+                            continue
+
+                        # 2) 有些提供商用 choices[].message.content 逐步推送
+                        msg = (
+                            obj.get("choices", [{}])[0]
+                               .get("message", {})
+                               .get("content")
+                        )
+                        if msg:
+                            acc_text += msg
+                            placeholder.markdown(acc_text)
+                            continue
+
+                        # 3) 某些会单独推送 reasoning；我们直接忽略
+                        #    也可能是 {"reasoning": "..."} 或 choices[].delta.reasoning
+                        #    不做任何处理即可
+                        pass
             else:
                 # ——非流式（最稳，不乱码）——
                 r = requests.post(url, headers=headers, json=base_payload, timeout=300)
