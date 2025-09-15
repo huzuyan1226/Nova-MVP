@@ -91,7 +91,7 @@ if user:
         acc_text = ""
 
         try:
-                       if use_stream:
+            if use_stream:
                 # ——更健壮的流式解析（忽略 reasoning，兼容多种返回结构）——
                 with requests.post(
                     url,
