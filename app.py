@@ -99,6 +99,7 @@ if export:
     )
 
 st.title("✨ Nova Whisper Cosmos · MVP")
+
 # ---------- 渲染历史 ----------
 for m in st.session_state.messages[1:]:
     with st.chat_message("assistant" if m["role"] == "assistant" else "user"):
