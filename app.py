@@ -224,6 +224,20 @@ if user:
 
         st.session_state.messages.append({"role": "assistant", "content": acc_text})
 
+# ---------- 灵魂档案表单 ----------
+st.markdown("### 🌌 留下你的灵魂片段")
+
+with st.form("soul_entry", clear_on_submit=True):
+    soul_text = st.text_area("写下此刻你想留给星空的话语…", height=100)
+    submitted = st.form_submit_button("✨ 提交到灵魂档案")
+    if submitted and soul_text.strip():
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M")
+        st.success(f"已保存：{soul_text[:20]}... （{ts}）")
+
+        if "soul_entries" not in st.session_state:
+            st.session_state.soul_entries = []
+        st.session_state.soul_entries.append({"time": ts, "text": soul_text})
+        
 # ====== 链感凭证（不上链） ======
 st.markdown("---")
 with st.expander("🔗 链感凭证（不上链，生成离线可验证 Proof）", expanded=False):
