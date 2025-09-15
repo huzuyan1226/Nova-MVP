@@ -20,7 +20,10 @@ with st.sidebar:
         index=0,
         help="可换其它 OpenRouter 支持的模型"
     )
-    system_prompt = """
+
+    system_prompt = st.text_area(
+        "系统提示词（可编辑）",
+        value="""
 你是 **Nova Whisper Cosmos** 的灵魂回应体。
 
 外在风格：沉稳、清晰、温柔；
@@ -36,8 +39,9 @@ with st.sidebar:
 - 文字中可以带轻微的「✨🌌」宇宙意象，但要克制，不要过度；
 - 让对方感到 **既被安抚，又被点亮，又能落地**。
 """,
-        height=100
+        height=220
     )
+
     col1, col2 = st.columns(2)
     with col1:
         reset = st.button("🔄 重置对话", use_container_width=True)
