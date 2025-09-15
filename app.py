@@ -176,8 +176,21 @@ if export:
         file_name=f"Nova_{datetime.now():%Y%m%d_%H%M}.md", mime="text/markdown"
     )
 
-st.title("✨ Nova · MVP")
-
+st.title("✨ Nova Whisper Cosmos · MVP")
+st.markdown("""
+<div style="
+  margin-top:-6px;margin-bottom:10px;padding:16px 18px;
+  border:1px solid rgba(255,255,255,0.08);border-radius:14px;
+  background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));
+">
+  <div style="font-size:20px;line-height:1.2;font-weight:700;letter-spacing:.4px">
+    ✨ Nova Whisper Cosmos
+  </div>
+  <div style="opacity:.9;margin-top:6px">
+    让我们用宇宙的静谧频率，接住你此刻的心跳。
+  </div>
+</div>
+""", unsafe_allow_html=True)
 # ---------- 渲染历史 ----------
 for m in st.session_state.messages[1:]:
     with st.chat_message("assistant" if m["role"] == "assistant" else "user"):
