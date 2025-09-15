@@ -1,4 +1,4 @@
-# app.py — Nova · MVP (stable non-streaming first)
+# app.py — Nova Whisper Cosmos · MVP (stable non-streaming first)
 import json
 import requests
 from datetime import datetime
