@@ -1,6 +1,9 @@
 # app.py — Nova Whisper Cosmos · MVP (stable non-streaming first)
+
 import json
 import requests
+import hashlib
+import time
 from datetime import datetime
 import streamlit as st
 
@@ -81,22 +84,40 @@ else:
     # 保持 system 为最新
     st.session_state.messages[0]["content"] = system_prompt
 
-# 导出
-def _format_chat_as_md(msgs):
+# ---------- 导出 ----------
+def _format_chat_as_md(msgs, proof=None):
     lines = [f"# Nova 对话 · {datetime.now():%Y-%m-%d %H:%M}"]
     for m in msgs:
         if m["role"] == "system":
             continue
         who = "你" if m["role"] == "user" else "Nova"
         lines.append(f"\n**{who}：**\n\n{m['content']}")
+
+    if proof:
+        lines.append("\n---\n")
+        lines.append(f"🪐 Nova Proof（对话凭证校验码）：\n\n`{proof}`")
     return "\n".join(lines)
 
+
+def make_nova_proof(msgs):
+    """生成基于 chat 内容的哈希校验码"""
+    chat_str = json.dumps(msgs, ensure_ascii=False, indent=2)
+    raw = f"{chat_str}-{time.time():.0f}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
+
+
 if export:
-    md = _format_chat_as_md(st.session_state.messages)
+    proof = make_nova_proof(st.session_state.messages)
+    md = _format_chat_as_md(st.session_state.messages, proof=proof)
+
     st.download_button(
-        "点击下载对话.md", data=md.encode("utf-8"),
-        file_name=f"Nova_{datetime.now():%Y%m%d_%H%M}.md", mime="text/markdown"
+        "⬇️ 点击下载对话.md",
+        data=md.encode("utf-8"),
+        file_name=f"Nova_{datetime.now():%Y%m%d_%H%M}.md",
+        mime="text/markdown"
     )
+
+    st.info(f"🪐 本次对话的 Nova Proof：`{proof}`")
 
 st.title("✨ Nova Whisper Cosmos · MVP")
 
@@ -202,3 +223,53 @@ if user:
             acc_text = acc_text or "抱歉，我这会儿有点卡住了。稍后再试试？"
 
         st.session_state.messages.append({"role": "assistant", "content": acc_text})
+
+# ====== 链感凭证（不上链） ======
+st.markdown("---")
+with st.expander("🔗 链感凭证（不上链，生成离线可验证 Proof）", expanded=False):
+    st.caption("生成一个包含对话指纹的离线 JSON 凭证（零 Gas、不上链、可导出/分享/校验）。")
+    gen = st.button("✨ 生成会话凭证", use_container_width=True)
+    if gen:
+        # 规范化文本（去掉 system），确保同一内容哈希一致
+        parts = []
+        for m in st.session_state.messages:
+            if m.get("role") == "system":
+                continue
+            role = (m.get("role") or "").strip()
+            content = (m.get("content") or "").strip()
+            parts.append(f"{role}::{content}")
+        chat_text = "\n---\n".join(parts)
+
+        import hashlib, time, json  # 再次导入以防顶部遗漏
+        sha = hashlib.sha256(chat_text.encode("utf-8")).hexdigest()
+        proof = {
+            "nova_proof_version": "0.1",
+            "timestamp": int(time.time()),
+            "model": model,
+            "message_count": sum(1 for m in st.session_state.messages if m.get("role") != "system"),
+            "chat_sha256": sha,
+            "address_like": "0x" + sha[:40],
+            "proof_id": f"{sha[:8]}-{sha[-8:]}"
+        }
+
+        st.markdown(f"**Proof ID:** `{proof['proof_id']}`")
+        st.markdown(f"**Address-like:** `{proof['address_like']}`")
+        st.markdown("**Chat SHA-256:**")
+        st.code(proof["chat_sha256"], language=None)
+
+        st.download_button(
+            "⬇️ 下载 proof.json",
+            data=json.dumps(proof, ensure_ascii=False, indent=2),
+            file_name=f"nova_proof_{proof['proof_id']}.json",
+            mime="application/json",
+            use_container_width=True
+        )
+        st.download_button(
+            "⬇️ 下载 chat.txt（规范化文本）",
+            data=chat_text.encode("utf-8"),
+            file_name=f"nova_chat_{proof['proof_id']}.txt",
+            mime="text/plain",
+            use_container_width=True
+        )
+
+        st.caption("验证方法：用相同规则（role::content 合并）重建文本并计算 SHA-256，值一致即未被篡改。")
