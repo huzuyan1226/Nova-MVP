@@ -47,6 +47,7 @@ with st.sidebar:
         reset = st.button("🔄 重置对话", use_container_width=True)
     with col2:
         export = st.button("⬇️ 导出对话", use_container_width=True)
+use_stream = st.checkbox("流式输出（可能更酷，但偶尔会乱码）", value=True)
 
 # ====== 会话状态 ======
 if "messages" not in st.session_state or reset:
@@ -85,63 +86,49 @@ for m in st.session_state.messages[1:]:
         st.markdown(m["content"])
 
 # ====== 发送消息 ======
-user = st.chat_input("把心里话告诉 Nova…")
-if user:
-    # 1) 展示用户消息
-    st.session_state.messages.append({"role": "user", "content": user})
-    with st.chat_message("user"):
-        st.markdown(user)
+url = f"{API_BASE}/chat/completions"
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json",
+    "HTTP-Referer": "https://share.streamlit.io",
+    "X-Title": "Nova MVP",
+}
+base_payload = {
+    "model": model,
+    "messages": st.session_state.messages,
+}
 
-    # 2) 调用 OpenRouter（流式）
-    url = f"{API_BASE}/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://share.streamlit.io",  # OpenRouter 推荐带上
-        "X-Title": "Nova MVP",
-    }
-    payload = {
-        "model": model,
-        "messages": st.session_state.messages,
-        "stream": True,
-    }
+with st.chat_message("assistant"):
+    placeholder = st.empty()
+    acc_text = ""
 
-    with st.chat_message("assistant"):
-        placeholder = st.empty()
-        acc_text = ""
-
-        try:
+    try:
+        if use_stream:
+            payload = {**base_payload, "stream": True}
             with requests.post(url, headers=headers, json=payload, stream=True, timeout=120) as r:
                 r.raise_for_status()
                 for raw in r.iter_lines(decode_unicode=True):
-                    if not raw:
-                        continue
-                    if not raw.startswith("data: "):
+                    if not raw or not raw.startswith("data: "):
                         continue
                     data = raw[6:]
                     if data == "[DONE]":
                         break
-                    # OpenRouter SSE: 每行是一个 JSON
-                    try:
-                        obj = json.loads(data)
-                        # 只取文本，不显示 reasoning
-                        delta = obj.get("choices", [{}])[0].get("delta", {}).get("content")
-                        if delta:
-                            acc_text += delta
-                            placeholder.markdown(acc_text)
-                    except Exception:
-                        # 某些实现可能是 message 累积体，兜底解析
-                        try:
-                            msg = obj.get("choices", [{}])[0].get("message", {}).get("content")
-                            if msg:
-                                acc_text = msg
-                                placeholder.markdown(acc_text)
-                        except Exception:
-                            pass
+                    obj = json.loads(data)
+                    delta = obj.get("choices", [{}])[0].get("delta", {}).get("content")
+                    if delta:
+                        acc_text += delta
+                        placeholder.markdown(acc_text)
+        else:
+            payload = {**base_payload, "stream": False}
+            r = requests.post(url, headers=headers, json=payload, timeout=120)
+            r.raise_for_status()
+            data = r.json()
+            # 一次性拿完整文本，最不容易乱码
+            acc_text = data["choices"][0]["message"]["content"]
+            placeholder.markdown(acc_text)
 
-        except Exception as e:
-            placeholder.error(f"请求失败：{e}")
-            acc_text = "抱歉，我这会儿有点卡住了。稍后再试试？"
+    except Exception as e:
+        placeholder.error(f"请求失败：{e}")
+        acc_text = "抱歉，我这会儿有点卡住了。稍后再试试？"
 
-        # 3) 收尾：把助手回复写入历史
-        st.session_state.messages.append({"role": "assistant", "content": acc_text})
+st.session_state.messages.append({"role": "assistant", "content": acc_text})
