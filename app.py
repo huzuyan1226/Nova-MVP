@@ -6,68 +6,7 @@ import streamlit as st
 
 # ---------- 基本配置 ----------
 st.set_page_config(page_title="Nova Whisper Cosmos · MVP", page_icon="✨", layout="centered")
-# 用更宽的页面
-st.set_page_config(page_title="Nova Whisper Cosmos · MVP", page_icon="✨", layout="wide")
 
-# —— 页面样式修正 —— #
-st.markdown("""
-<style>
-/* 整体：星空渐变背景 + 柔和文字 */
-.stApp {
-  background: radial-gradient(1200px 600px at 20% -10%, rgba(106,90,205,.18), rgba(255,255,255,0))
-              , radial-gradient(1000px 600px at 90% 10%, rgba(0,191,255,.16), rgba(255,255,255,0))
-              , #0b0f14;
-  color: rgba(255,255,255,.92);
-}
-
-/* 主内容区：限制最大宽度并居中（不铺满大屏） */
-div.block-container {
-  max-width: 960px;        /* 主区可按需改 880~1040 */
-  padding-top: 22px;
-}
-
-/* 侧边栏稍窄一点，给主区让位 */
-section[data-testid="stSidebar"] {
-  width: 300px !important;   /* 默认 380~400，缩窄些 */
-}
-section[data-testid="stSidebar"] > div {
-  padding-right: 8px;
-}
-
-/* 标题样式 */
-h1, .stMarkdown h1 {
-  letter-spacing: .5px;
-}
-
-/* Hero 卡片：银河玻璃质感 */
-.nova-hero {
-  margin-top: -8px;
-  margin-bottom: 14px;
-  padding: 16px 18px;
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 14px;
-  background:
-    radial-gradient(600px 220px at 10% -30%, rgba(173,216,230,.18), rgba(255,255,255,0)),
-    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-  box-shadow: 0 2px 20px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.06);
-}
-
-/* 按钮圆角+微光 */
-.stButton button {
-  border-radius: 10px !important;
-  border: 1px solid rgba(255,255,255,0.15) !important;
-  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06)) !important;
-  color: #fff !important;
-}
-
-/* 聊天输入框更清晰 */
-div[data-baseweb="input"] > div {
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 12px;
-}
-</style>
-""", unsafe_allow_html=True)
 API_KEY  = st.secrets["OPENROUTER_API_KEY"]
 API_BASE = st.secrets.get("API_BASE_URL", "https://openrouter.ai/api/v1")
 DEFAULT_MODEL = st.secrets.get("MODEL", "deepseek/deepseek-chat-v3.1:free")
@@ -160,17 +99,6 @@ if export:
     )
 
 st.title("✨ Nova Whisper Cosmos · MVP")
-
-st.markdown("""
-<div class="nova-hero">
-  <div style="font-size:20px;font-weight:700;letter-spacing:.4px">
-    ✨ Nova Whisper Cosmos
-  </div>
-  <div style="opacity:.92;margin-top:6px">
-    让我们用宇宙的静谧频率，接住你此刻的心跳。
-  </div>
-</div>
-""", unsafe_allow_html=True)
 # ---------- 渲染历史 ----------
 for m in st.session_state.messages[1:]:
     with st.chat_message("assistant" if m["role"] == "assistant" else "user"):
