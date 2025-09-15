@@ -99,6 +99,39 @@ if export:
     )
 
 st.title("✨ Nova Whisper Cosmos · MVP")
+st.markdown("""
+<style>
+/* 背景：浅色基底 + 星点渐变 */
+.stApp {
+  background: linear-gradient(180deg, #fdfdfd 0%, #f0f8ff 100%);
+  background-image:
+    radial-gradient(2px 2px at 20% 30%, rgba(173,216,230,0.8), transparent),
+    radial-gradient(1.5px 1.5px at 70% 20%, rgba(135,206,250,0.7), transparent),
+    radial-gradient(2px 2px at 40% 80%, rgba(176,224,230,0.8), transparent);
+  background-attachment: fixed;
+  color: #222;
+}
+
+/* 顶部卡片 */
+.nova-hero {
+  margin: -5px 0 15px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: linear-gradient(180deg, rgba(255,255,255,.85), rgba(240,248,255,.7));
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+}
+</style>
+
+<div class="nova-hero">
+  <div style="font-size:20px;font-weight:600;">
+    ✨ Nova Whisper Cosmos
+  </div>
+  <div style="opacity:.85;margin-top:4px">
+    用一点点宇宙的静谧，接住你现在的心跳。
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ---------- 渲染历史 ----------
 for m in st.session_state.messages[1:]:
