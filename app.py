@@ -5,8 +5,86 @@ from datetime import datetime
 import streamlit as st
 
 # ---------- 基本配置 ----------
-st.set_page_config(page_title="Nova · MVP", page_icon="✨", layout="centered")
+st.set_page_config(page_title="Nova Whisper Cosmos · MVP", page_icon="✨", layout="centered")
+# ==== Nova · 宇宙皮肤 ====
+enable_skin = True  # 想临时关掉就改成 False
 
+if enable_skin:
+    st.markdown("""
+    <style>
+    :root{
+      --nova-bg1:#0b1220; --nova-bg2:#05070d;
+      --nova-text:#e9ecff; --nova-card:rgba(255,255,255,0.04);
+      --nova-border:rgba(255,255,255,0.08);
+    }
+    /* 背景 + 星光层 */
+    .stApp{
+      background: radial-gradient(1100px 600px at 10% -10%, var(--nova-bg1) 0%, #070b14 55%, var(--nova-bg2) 100%) fixed;
+      color: var(--nova-text);
+    }
+    .stApp::before{
+      content:""; position:fixed; inset:0; pointer-events:none;
+      background-image:
+        radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,.18) 0, rgba(255,255,255,0) 60%),
+        radial-gradient(1.5px 1.5px at 80% 20%, rgba(255,255,255,.12) 0, rgba(255,255,255,0) 60%),
+        radial-gradient(1.5px 1.5px at 60% 70%, rgba(255,255,255,.12) 0, rgba(255,255,255,0) 60%),
+        radial-gradient(1px 1px at 30% 80%, rgba(255,255,255,.10) 0, rgba(255,255,255,0) 60%);
+      animation: twinkle 6s ease-in-out infinite alternate;
+    }
+    @keyframes twinkle { from{opacity:.35} to{opacity:.6} }
+
+    /* 页面宽度 & 标题色 */
+    .block-container{ padding-top:1.2rem; max-width:820px; }
+    h1,h2,h3{ color:var(--nova-text); letter-spacing:.3px; }
+
+    /* 聊天气泡（玻璃态） */
+    [data-testid="stChatMessage"] > div{
+      background: var(--nova-card);
+      border: 1px solid var(--nova-border);
+      border-radius: 14px; padding: 14px 16px; backdrop-filter: blur(6px);
+    }
+    [data-testid="stChatMessage"] pre, code{
+      background: rgba(0,0,0,.35) !important; border-radius: 8px;
+    }
+
+    /* 输入框样式 */
+    [data-testid="stChatInput"] textarea{
+      border-radius: 12px !important;
+      border: 1px solid var(--nova-border) !important;
+      background: rgba(255,255,255,.03) !important;
+      color: var(--nova-text) !important;
+    }
+    [data-testid="stChatInput"] button{ border-radius: 10px !important; }
+
+    /* 通用按钮（渐变+悬停光晕） */
+    .stButton > button{
+      background: linear-gradient(135deg, #6b7cff, #7ce8ff);
+      border: none; color: #0a0f1e; font-weight: 600;
+      border-radius: 12px; padding: .5rem .8rem;
+      box-shadow: 0 0 0 0 rgba(123,200,255,.0);
+      transition: transform .08s ease-out, box-shadow .3s ease;
+    }
+    .stButton > button:hover{ transform: translateY(-1px); box-shadow: 0 6px 18px rgba(123,200,255,.25); }
+
+    /* 侧边栏 */
+    section[data-testid="stSidebar"]{
+      background: linear-gradient(180deg, rgba(11,18,32,.85), rgba(5,7,13,.92));
+      border-right:1px solid var(--nova-border);
+    }
+    section[data-testid="stSidebar"] .stMarkdown p{ color: var(--nova-text); }
+    section[data-testid="stSidebar"] textarea,
+    section[data-testid="stSidebar"] div[data-baseweb="select"]{
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--nova-border); border-radius: 10px;
+    }
+
+    /* info 提示框（更“宇宙蓝”） */
+    div[role="alert"]{
+      background: rgba(123,200,255,.08) !important;
+      border: 1px solid rgba(123,200,255,.25) !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 API_KEY  = st.secrets["OPENROUTER_API_KEY"]
 API_BASE = st.secrets.get("API_BASE_URL", "https://openrouter.ai/api/v1")
 DEFAULT_MODEL = st.secrets.get("MODEL", "deepseek/deepseek-chat-v3.1:free")
