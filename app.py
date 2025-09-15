@@ -17,8 +17,7 @@ with st.sidebar:
     st.subheader("⚙️ 设置")
     model = st.selectbox(
         "模型",
-        options=[DEFAULT_MODEL, "deepseek/deepseek-chat", "meta-llama/llama-3.1-8b-instruct:free",
-                 "mistralai/mistral-7b-instruct:free"],
+        options=[DEFAULT_MODEL, "deepseek/deepseek-chat"],
         index=0
     )
 
