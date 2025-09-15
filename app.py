@@ -31,7 +31,7 @@ with st.sidebar:
         height=180
     )
 
-    use_stream = st.checkbox("流式输出（更酷，但偶尔会乱码）", value=False)
+    use_stream = st.checkbox("流式输出", value=False)
 
     col1, col2 = st.columns(2)
     with col1:
