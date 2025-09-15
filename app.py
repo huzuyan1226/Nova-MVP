@@ -234,7 +234,7 @@ if user:
 st.markdown("### 💙 留下你的灵魂片段")
 
 with st.form("soul_entry", clear_on_submit=True):
-    soul_text = st.text_area("写下此刻你想留给星空的话语…", height=100)
+    soul_text = st.text_input("写下此刻你想留给星空的话语…")
     submitted = st.form_submit_button("✨ 提交到灵魂档案")
     if submitted and soul_text.strip():
         ts = datetime.now().strftime("%Y-%m-%d %H:%M")
