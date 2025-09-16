@@ -8,7 +8,7 @@ from datetime import datetime
 import streamlit as st
 from supabase import create_client
 
-# ---------- 基本配置 ----------
+# ---------- 基本配置（必须最先调用的 st.*） ----------
 st.set_page_config(
     page_title="Nova Whisper Cosmos · MVP",
     page_icon="✨",
@@ -18,12 +18,10 @@ st.set_page_config(
 # ---------- 连接 Supabase ----------
 supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
+# ---------- 测试区（放在 set_page_config 之后） ----------
 # 🧪 测试插入一条数据
 if st.button("测试保存到 Supabase"):
-    res = supabase.table("messages").insert({
-        "role": "test",
-        "content": "Hello from Streamlit"
-    }).execute()
+    res = supabase.table("messages").insert({"role": "test", "content": "Hello from Streamlit"}).execute()
     st.write("插入结果:", res)
 
 # 🧪 测试读取数据
