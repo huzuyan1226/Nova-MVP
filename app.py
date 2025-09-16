@@ -21,33 +21,35 @@ APP_URL = st.secrets.get("APP_URL", "https://streamlit.io")  # 可不填
 
 # ---------- 侧边栏 ----------
 with st.sidebar:
-    st.subheader("🔐 登录 / 注册")
+    st.subheader("🔐 登录 / 注册（最小版）")
 
+    # 初始化 user
     if "user" not in st.session_state:
         st.session_state.user = None
 
     if st.session_state.user:
         u = st.session_state.user
-        st.success(f"已登录：{u.email}")
-        if st.button("退出登录"):
+        st.success(f"已登录：{getattr(u, 'email', '(无邮箱)')}")
+        if st.button("退出登录", use_container_width=True, key="btn_logout"):
             supabase.auth.sign_out()
             st.session_state.user = None
             st.rerun()
     else:
-        email = st.text_input("邮箱", key="auth_email")
-        pwd   = st.text_input("密码", type="password", key="auth_pwd")
-        if st.button("登录 / 注册"):
+        email = st.text_input("邮箱", key="auth_email_sidebar")
+        pwd   = st.text_input("密码", type="password", key="auth_pwd_sidebar")
+        if st.button("登录 / 注册", use_container_width=True, key="btn_login_sidebar"):
             try:
                 res = supabase.auth.sign_in_with_password({"email": email, "password": pwd})
                 st.session_state.user = res.user
                 st.rerun()
             except Exception:
                 try:
-                    supabase.auth.sign_up({"email": email, "password": pwd})
-                    st.success("注册成功，请再点一次【登录 / 注册】完成登录")
+                    res = supabase.auth.sign_up({"email": email, "password": pwd})
+                    st.success("注册成功：请再次点击【登录 / 注册】完成登录")
                 except Exception as e2:
                     st.error(f"失败：{e2}")
 
+    st.divider()
     st.subheader("⚙️ 设置")
     model = st.selectbox(
         "模型",
