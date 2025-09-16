@@ -87,6 +87,48 @@ else:
     # 保持 system 为最新
     st.session_state.messages[0]["content"] = system_prompt
 
+# ==== MOD: EMOTION START ====
+def classify_emotion(text: str, model_name: str, api_key: str, api_base: str) -> dict:
+    """Classify emotion from text using OpenRouter API"""
+    try:
+        url = f"{api_base}/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": model_name,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "From the user's message, choose ONE tag from [calm, sad, angry, anxious, hopeful, grateful, confused, excited, neutral] and one matching emoji. Respond ONLY as JSON: {\"tag\":\"...\",\"emoji\":\"...\"}"
+                },
+                {
+                    "role": "user", 
+                    "content": text
+                }
+            ],
+            "temperature": 0.2,
+            "max_tokens": 50
+        }
+        
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            content = data["choices"][0]["message"]["content"].strip()
+            # Try to parse JSON response
+            try:
+                emotion_data = json.loads(content)
+                return emotion_data
+            except json.JSONDecodeError:
+                # If not valid JSON, return default
+                return {"tag": "neutral", "emoji": "🫧"}
+        else:
+            return {"tag": "neutral", "emoji": "🫧"}
+    except Exception:
+        return {"tag": "neutral", "emoji": "🫧"}
+# ==== MOD: EMOTION END ====
+
 # ---------- 导出 ----------
 def _format_chat_as_md(msgs, proof=None):
     lines = [f"# Nova 对话 · {datetime.now():%Y-%m-%d %H:%M}"]
@@ -139,10 +181,20 @@ if "soul_entries" in st.session_state and st.session_state.soul_entries:
 user = st.chat_input("把此刻的心跳，交给星空中的回应…")
 if user:
     st.session_state.messages.append({"role": "user", "content": user})
-    supabase.table("messages").insert({"role": "user", "content": user}).execute()   # 🪐 保存用户发言
+    
+    # ==== MOD: EMOTION START ====
+    # Classify emotion for user message
+    emotion_data = classify_emotion(user, model, API_KEY, API_BASE)
+    emotion_label = f"{emotion_data['emoji']} {emotion_data['tag']}"
+    # ==== MOD: EMOTION END ====
+    
+    supabase.table("messages").insert({"role": "user", "content": user, "emotion": emotion_label}).execute()   # 🪐 保存用户发言
     
     with st.chat_message("user"):
         st.markdown(user)
+        # ==== MOD: EMOTION START ====
+        st.caption(emotion_label)
+        # ==== MOD: EMOTION END ====
 
     url = f"{API_BASE}/chat/completions"
     headers = {
@@ -234,7 +286,18 @@ if user:
             acc_text = acc_text or "抱歉，我这会儿有点卡住了。稍后再试试？"
 
         st.session_state.messages.append({"role": "assistant", "content": acc_text})
-        supabase.table("messages").insert({"role": "assistant", "content": acc_text}).execute()   # 🪐 保存助手回复
+        
+        # ==== MOD: EMOTION START ====
+        # Classify emotion for assistant message
+        assistant_emotion_data = classify_emotion(acc_text, model, API_KEY, API_BASE)
+        assistant_emotion_label = f"{assistant_emotion_data['emoji']} {assistant_emotion_data['tag']}"
+        # ==== MOD: EMOTION END ====
+        
+        supabase.table("messages").insert({"role": "assistant", "content": acc_text, "emotion": assistant_emotion_label}).execute()   # 🪐 保存助手回复
+        
+        # ==== MOD: EMOTION START ====
+        st.caption(assistant_emotion_label)
+        # ==== MOD: EMOTION END ====
 
 # ---------- 灵魂档案表单 ----------
 st.markdown("#### 💙 留下你的灵魂片段")
@@ -299,3 +362,4 @@ with st.expander("🔗 链感凭证（不上链，生成离线可验证 Proof）
         )
 
         st.caption("验证方法：用相同规则（role::content 合并）重建文本并计算 SHA-256，值一致即未被篡改。")
+
