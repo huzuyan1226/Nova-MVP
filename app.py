@@ -14,6 +14,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+st.sidebar.success("✅ sidebar alive")
 
 # ---------- 连接 Supabase ----------
 from supabase import create_client
