@@ -19,14 +19,16 @@ API_BASE = st.secrets.get("API_BASE_URL", "https://openrouter.ai/api/v1")
 DEFAULT_MODEL = st.secrets.get("MODEL", "deepseek/deepseek-chat-v3.1:free")
 APP_URL = st.secrets.get("APP_URL", "https://streamlit.io")  # 可不填
 
-# ---------- 侧边栏 ----------
+# ---------- 侧边栏（完整可见版） ----------
 with st.sidebar:
-    st.subheader("🔐 登录 / 注册（最小版）")
+    st.header("🪐 Nova Panel")
+    st.write("DEBUG: sidebar rendered ✅")   # 看见这行说明侧边栏加载成功
 
-    # 初始化 user
+    # ---- 登录 / 注册（最小版）----
     if "user" not in st.session_state:
         st.session_state.user = None
 
+    st.subheader("🔐 登录 / 注册")
     if st.session_state.user:
         u = st.session_state.user
         st.success(f"已登录：{getattr(u, 'email', '(无邮箱)')}")
@@ -44,7 +46,7 @@ with st.sidebar:
                 st.rerun()
             except Exception:
                 try:
-                    res = supabase.auth.sign_up({"email": email, "password": pwd})
+                    supabase.auth.sign_up({"email": email, "password": pwd})
                     st.success("注册成功：请再次点击【登录 / 注册】完成登录")
                 except Exception as e2:
                     st.error(f"失败：{e2}")
