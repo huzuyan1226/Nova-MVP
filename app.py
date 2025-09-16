@@ -138,22 +138,25 @@ if "soul_entries" in st.session_state and st.session_state.soul_entries:
 # ---------- 发送消息 ----------
 user = st.chat_input("把此刻的心跳，交给星空中的回应…")
 if user:
+    # 1) 先把用户话加入上下文
     st.session_state.messages.append({"role": "user", "content": user})
 
-    # 先算出用户标识
+    # 2) 计算用户标识（登录ID -> 侧栏邮箱 -> guest）
     uid = (st.session_state.get("user") and getattr(st.session_state["user"], "id", None)) or None
     user_tag = uid or st.session_state.get("user_email") or "guest"
 
-    st.session_state.messages.append({"role": "assistant", "content": acc_text})
+    # 3) 存“用户消息”到 Supabase（一定要 role='user'）
     supabase.table("messages").insert({
-        "role": "assistant",
-        "content": acc_text,
+        "role": "user",
+        "content": user,
         "user_tag": user_tag
     }).execute()
-    
+
+    # 4) 前端渲染用户消息
     with st.chat_message("user"):
         st.markdown(user)
 
+    # 5) 组请求参数
     url = f"{API_BASE}/chat/completions"
     headers = {
         "Authorization": f"Bearer {API_KEY}",
@@ -163,13 +166,13 @@ if user:
     }
     base_payload = {"model": model, "messages": st.session_state.messages}
 
+    # 6) 渲染助手占位 & 调用模型
     with st.chat_message("assistant"):
         placeholder = st.empty()
         acc_text = ""
 
         try:
             if use_stream:
-                # ——更健壮的流式解析（忽略 reasoning，兼容多种返回结构）——
                 with requests.post(
                     url,
                     headers=headers,
@@ -178,54 +181,30 @@ if user:
                     timeout=300,
                 ) as r:
                     r.raise_for_status()
-                    r.encoding = "utf-8"  # 强制按 utf-8 解析，防止中文半字符
+                    r.encoding = "utf-8"
                     for raw in r.iter_lines(decode_unicode=True):
                         if not raw:
                             continue
-
-                        # 只处理标准 SSE 数据行
                         if not raw.startswith("data: "):
                             continue
                         data = raw[6:].strip()
-
-                        # 结束标记
                         if data == "[DONE]":
                             break
-
                         try:
                             obj = json.loads(data)
                         except Exception:
-                            # 非法 JSON（偶发），跳过
                             continue
-
-                        # 1) OpenAI/DeepSeek 兼容：choices[].delta.content
-                        delta = (
-                            obj.get("choices", [{}])[0]
-                               .get("delta", {})
-                               .get("content")
-                        )
+                        delta = obj.get("choices", [{}])[0].get("delta", {}).get("content")
                         if delta:
                             acc_text += delta
                             placeholder.markdown(acc_text)
                             continue
-
-                        # 2) 有些提供商用 choices[].message.content 逐步推送
-                        msg = (
-                            obj.get("choices", [{}])[0]
-                               .get("message", {})
-                               .get("content")
-                        )
+                        msg = obj.get("choices", [{}])[0].get("message", {}).get("content")
                         if msg:
                             acc_text += msg
                             placeholder.markdown(acc_text)
                             continue
-
-                        # 3) 某些会单独推送 reasoning；我们直接忽略
-                        #    也可能是 {"reasoning": "..."} 或 choices[].delta.reasoning
-                        #    不做任何处理即可
-                        pass
             else:
-                # ——非流式（最稳，不乱码）——
                 r = requests.post(url, headers=headers, json=base_payload, timeout=300)
                 if r.status_code != 200:
                     try:
@@ -243,17 +222,14 @@ if user:
                 placeholder.error(f"请求失败：{e}")
             acc_text = acc_text or "抱歉，我这会儿有点卡住了。稍后再试试？"
 
-        # 先算出用户标识
-        uid = (st.session_state.get("user") and getattr(st.session_state["user"], "id", None)) or None
-        user_tag = uid or st.session_state.get("user_email") or "guest"
-
+        # 7) 这里再保存“助手消息”（role='assistant'）
         st.session_state.messages.append({"role": "assistant", "content": acc_text})
         supabase.table("messages").insert({
             "role": "assistant",
             "content": acc_text,
             "user_tag": user_tag
         }).execute()
-
+        
 # ---------- 灵魂档案表单 ----------
 st.markdown("#### 💙 留下你的灵魂片段")
 
