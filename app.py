@@ -233,8 +233,29 @@ if user:
                 placeholder.error(f"请求失败：{e}")
             acc_text = acc_text or "抱歉，我这会儿有点卡住了。稍后再试试？"
 
-        st.session_state.messages.append({"role": "assistant", "content": acc_text})
-        supabase.table("messages").insert({"role": "assistant", "content": acc_text}).execute()   # 🪐 保存助手回复
+       # 先要情绪标签
+emo_req = {
+    "model": model,
+    "messages": [
+        {"role": "system", "content": "You are an emotion classifier. Given a text, output a short label like '💙 calm' or '🔥 angry'."},
+        {"role": "user", "content": acc_text}
+    ],
+    "max_tokens": 10
+}
+emo_res = requests.post(f"{API_BASE}/chat/completions", headers=headers, json=emo_req, timeout=60).json()
+emotion = emo_res["choices"][0]["message"]["content"].strip()
+
+# 保存到会话 & 数据库
+st.session_state.messages.append({
+    "role": "assistant",
+    "content": acc_text,
+    "emotion": emotion
+})
+supabase.table("messages").insert({
+    "role": "assistant",
+    "content": acc_text,
+    "emotion": emotion
+}).execute()
 
 # ---------- 灵魂档案表单 ----------
 st.markdown("#### 💙 留下你的灵魂片段")
