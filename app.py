@@ -6,27 +6,38 @@ import hashlib
 import time
 from datetime import datetime
 import streamlit as st
-
 from supabase import create_client
 
+# ---------- 基本配置 ----------
+st.set_page_config(
+    page_title="Nova Whisper Cosmos · MVP",
+    page_icon="✨",
+    layout="centered"
+)
+
+# ---------- 连接 Supabase ----------
 supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
 # 🧪 测试插入一条数据
 if st.button("测试保存到 Supabase"):
-    res = supabase.table("messages").insert({"role": "test", "content": "Hello from Streamlit"}).execute()
+    res = supabase.table("messages").insert({
+        "role": "test",
+        "content": "Hello from Streamlit"
+    }).execute()
     st.write("插入结果:", res)
 
 # 🧪 测试读取数据
 res = supabase.table("messages").select("*").limit(5).execute()
 st.write("读取前 5 条数据:", res)
 
-# ---------- 基本配置 ----------
-st.set_page_config(page_title="Nova Whisper Cosmos · MVP", page_icon="✨", layout="centered")
-
+# ---------- API 配置 ----------
 API_KEY  = st.secrets["OPENROUTER_API_KEY"]
 API_BASE = st.secrets.get("API_BASE_URL", "https://openrouter.ai/api/v1")
 DEFAULT_MODEL = st.secrets.get("MODEL", "deepseek/deepseek-chat-v3.1:free")
-APP_URL = st.secrets.get("APP_URL", "https://streamlit.io")  # 可不填
+APP_URL = st.secrets.get("APP_URL", "https://streamlit.io")  # 没填也能跑
+
+# 🛠️ 这里后面可以接上你的对话逻辑
+# 例如：st.chat_input → 保存到 Supabase → 请求 OpenRouter → 显示助手回复
 
 # ---------- 侧边栏 ----------
 with st.sidebar:
