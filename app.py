@@ -110,6 +110,14 @@ with st.sidebar:
     with col2:
         export = st.button("⬇️ 导出对话", use_container_width=True)
 
+# --- 调试：显示当前登录状态（临时） ---
+st.caption("调试：当前登录状态如下（看到 user.id 说明登录已生效）：")
+st.json({
+    "user_set": bool(st.session_state.get("user")),
+    "user_id": getattr(st.session_state.get("user"), "id", None),
+    "user_email": getattr(st.session_state.get("user"), "email", None),
+})
+
 # ---------- 会话状态 ----------
 if "messages" not in st.session_state or reset:
     st.session_state.messages = [{"role": "system", "content": system_prompt}]
