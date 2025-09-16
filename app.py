@@ -8,7 +8,12 @@ from datetime import datetime
 import streamlit as st
 
 # ---------- 基本配置（必须是第一个 st.* 调用） ----------
-st.set_page_config(page_title="Nova Whisper Cosmos · MVP", page_icon="✨", layout="centered")
+st.set_page_config(
+    page_title="Nova Whisper Cosmos · MVP",
+    page_icon="✨",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 # ---------- 连接 Supabase ----------
 from supabase import create_client
