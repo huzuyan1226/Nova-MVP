@@ -7,80 +7,19 @@ import time
 from datetime import datetime
 import streamlit as st
 
-# ---------- 基本配置（必须是第一个 st.* 调用） ----------
-st.set_page_config(
-    page_title="Nova Whisper Cosmos · MVP",
-    page_icon="✨",
-    layout="wide",                      # 改成 wide
-    initial_sidebar_state="expanded"    # 强制展开 sidebar
-)
-st.write("PAGE START ✅")
+from supabase import create_client
+supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
-# ---------- 读取 secrets ----------
-try:
-    SUPABASE_URL = st.secrets["SUPABASE_URL"]
-    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-    OPENROUTER_API_KEY = st.secrets["OPENROUTER_API_KEY"]
-    API_BASE = st.secrets.get("API_BASE_URL", "https://openrouter.ai/api/v1")
-    MODEL_DEFAULT = st.secrets.get("MODEL", "deepseek/deepseek-chat-v3.1:free")
-    APP_URL = st.secrets.get("APP_URL", "https://streamlit.io")
-    st.success("Secrets OK ✅")
-except Exception as e:
-    st.error("❌ 读取 secrets 失败")
-    st.exception(e)
-    st.stop()
-
-# ---------- 连接 Supabase ----------
-try:
-    from supabase import create_client
-    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    st.success("Supabase client OK ✅")
-except Exception as e:
-    st.error("❌ Supabase 客户端创建失败")
-    st.exception(e)
-    st.stop()
-
-# ---------- Sidebar 心跳 ----------
-st.sidebar.success("✅ sidebar alive")
+# ---------- 基本配置 ----------
+st.set_page_config(page_title="Nova Whisper Cosmos · MVP", page_icon="✨", layout="centered")
 
 API_KEY  = st.secrets["OPENROUTER_API_KEY"]
 API_BASE = st.secrets.get("API_BASE_URL", "https://openrouter.ai/api/v1")
 DEFAULT_MODEL = st.secrets.get("MODEL", "deepseek/deepseek-chat-v3.1:free")
 APP_URL = st.secrets.get("APP_URL", "https://streamlit.io")  # 可不填
 
-# ---------- 侧边栏（完整可见版） ----------
+# ---------- 侧边栏 ----------
 with st.sidebar:
-    st.header("🪐 Nova Panel")
-    st.write("DEBUG: sidebar rendered ✅")   # 看见这行说明侧边栏加载成功
-
-    # ---- 登录 / 注册（最小版）----
-    if "user" not in st.session_state:
-        st.session_state.user = None
-
-    st.subheader("🔐 登录 / 注册")
-    if st.session_state.user:
-        u = st.session_state.user
-        st.success(f"已登录：{getattr(u, 'email', '(无邮箱)')}")
-        if st.button("退出登录", use_container_width=True, key="btn_logout"):
-            supabase.auth.sign_out()
-            st.session_state.user = None
-            st.rerun()
-    else:
-        email = st.text_input("邮箱", key="auth_email_sidebar")
-        pwd   = st.text_input("密码", type="password", key="auth_pwd_sidebar")
-        if st.button("登录 / 注册", use_container_width=True, key="btn_login_sidebar"):
-            try:
-                res = supabase.auth.sign_in_with_password({"email": email, "password": pwd})
-                st.session_state.user = res.user
-                st.rerun()
-            except Exception:
-                try:
-                    supabase.auth.sign_up({"email": email, "password": pwd})
-                    st.success("注册成功：请再次点击【登录 / 注册】完成登录")
-                except Exception as e2:
-                    st.error(f"失败：{e2}")
-
-    st.divider()
     st.subheader("⚙️ 设置")
     model = st.selectbox(
         "模型",
@@ -141,14 +80,6 @@ with st.sidebar:
     with col2:
         export = st.button("⬇️ 导出对话", use_container_width=True)
 
-# --- 调试：显示当前登录状态（临时） ---
-st.caption("调试：当前登录状态如下（看到 user.id 说明登录已生效）：")
-st.json({
-    "user_set": bool(st.session_state.get("user")),
-    "user_id": getattr(st.session_state.get("user"), "id", None),
-    "user_email": getattr(st.session_state.get("user"), "email", None),
-})
-
 # ---------- 会话状态 ----------
 if "messages" not in st.session_state or reset:
     st.session_state.messages = [{"role": "system", "content": system_prompt}]
@@ -208,11 +139,7 @@ if "soul_entries" in st.session_state and st.session_state.soul_entries:
 user = st.chat_input("把此刻的心跳，交给星空中的回应…")
 if user:
     st.session_state.messages.append({"role": "user", "content": user})
-    supabase.table("messages").insert({
-    "role": "user",
-    "content": user,
-    "user_id": st.session_state.user.id if st.session_state.user else None
-}).execute()
+    supabase.table("messages").insert({"role": "user", "content": user}).execute()   # 🪐 保存用户发言
     
     with st.chat_message("user"):
         st.markdown(user)
@@ -307,11 +234,7 @@ if user:
             acc_text = acc_text or "抱歉，我这会儿有点卡住了。稍后再试试？"
 
         st.session_state.messages.append({"role": "assistant", "content": acc_text})
-        supabase.table("messages").insert({
-    "role": "assistant",
-    "content": acc_text,
-    "user_id": st.session_state.user.id if st.session_state.user else None
-}).execute()
+        supabase.table("messages").insert({"role": "assistant", "content": acc_text}).execute()   # 🪐 保存助手回复
 
 # ---------- 灵魂档案表单 ----------
 st.markdown("#### 💙 留下你的灵魂片段")
