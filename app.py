@@ -159,9 +159,9 @@ if user:
     # 保存用户发言
     st.session_state.messages.append({"role": "user", "content": user})
     supabase.table("messages").insert({
-        "role": "user",
-        "content": user,
-        "user_tag": user_tag
+        "role": "user",        # 或 "assistant"
+        "content": user,       # 或 acc_text
+        "user_tag": st.session_state.get("user_email") or "guest"
     }).execute()
 
     with st.chat_message("user"):
@@ -236,9 +236,9 @@ if user:
         # 保存助手回复（同样带 user_tag）
         st.session_state.messages.append({"role": "assistant", "content": acc_text})
         supabase.table("messages").insert({
-            "role": "assistant",
-            "content": acc_text,
-            "user_tag": user_tag
+            "role": "user",        # 或 "assistant"
+            "content": user,       # 或 acc_text
+            "user_tag": st.session_state.get("user_email") or "guest"
         }).execute()
 
 # ---------- 灵魂档案表单 ----------
