@@ -136,6 +136,8 @@ if "soul_entries" in st.session_state and st.session_state.soul_entries:
 user = st.chat_input("把此刻的心跳，交给星空中的回应…")
 if user:
     st.session_state.messages.append({"role": "user", "content": user})
+    supabase.table("messages").insert({"role": "user", "content": user}).execute()   # 🪐 保存用户发言
+    
     with st.chat_message("user"):
         st.markdown(user)
 
@@ -229,6 +231,7 @@ if user:
             acc_text = acc_text or "抱歉，我这会儿有点卡住了。稍后再试试？"
 
         st.session_state.messages.append({"role": "assistant", "content": acc_text})
+        supabase.table("messages").insert({"role": "assistant", "content": acc_text}).execute()   # 🪐 保存助手回复
 
 # ---------- 灵魂档案表单 ----------
 st.markdown("#### 💙 留下你的灵魂片段")
