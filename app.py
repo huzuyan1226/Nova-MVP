@@ -7,6 +7,9 @@ import time
 from datetime import datetime
 import streamlit as st
 
+from supabase import create_client
+supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+
 # ---------- 基本配置 ----------
 st.set_page_config(page_title="Nova Whisper Cosmos · MVP", page_icon="✨", layout="centered")
 
