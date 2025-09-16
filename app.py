@@ -7,11 +7,12 @@ import time
 from datetime import datetime
 import streamlit as st
 
+# ---------- 基本配置（必须是第一个 st.* 调用） ----------
+st.set_page_config(page_title="Nova Whisper Cosmos · MVP", page_icon="✨", layout="centered")
+
+# ---------- 连接 Supabase ----------
 from supabase import create_client
 supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
-
-# ---------- 基本配置 ----------
-st.set_page_config(page_title="Nova Whisper Cosmos · MVP", page_icon="✨", layout="centered")
 
 API_KEY  = st.secrets["OPENROUTER_API_KEY"]
 API_BASE = st.secrets.get("API_BASE_URL", "https://openrouter.ai/api/v1")
