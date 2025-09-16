@@ -139,7 +139,17 @@ if "soul_entries" in st.session_state and st.session_state.soul_entries:
 user = st.chat_input("把此刻的心跳，交给星空中的回应…")
 if user:
     st.session_state.messages.append({"role": "user", "content": user})
-    supabase.table("messages").insert({"role": "user", "content": user}).execute()   # 🪐 保存用户发言
+
+    # 先算出用户标识
+    uid = (st.session_state.get("user") and getattr(st.session_state["user"], "id", None)) or None
+    user_tag = uid or st.session_state.get("user_email") or "guest"
+
+    st.session_state.messages.append({"role": "assistant", "content": acc_text})
+    supabase.table("messages").insert({
+        "role": "assistant",
+        "content": acc_text,
+        "user_tag": user_tag
+    }).execute()
     
     with st.chat_message("user"):
         st.markdown(user)
@@ -233,8 +243,16 @@ if user:
                 placeholder.error(f"请求失败：{e}")
             acc_text = acc_text or "抱歉，我这会儿有点卡住了。稍后再试试？"
 
+        # 先算出用户标识
+        uid = (st.session_state.get("user") and getattr(st.session_state["user"], "id", None)) or None
+        user_tag = uid or st.session_state.get("user_email") or "guest"
+
         st.session_state.messages.append({"role": "assistant", "content": acc_text})
-        supabase.table("messages").insert({"role": "assistant", "content": acc_text}).execute()   # 🪐 保存助手回复
+        supabase.table("messages").insert({
+            "role": "assistant",
+            "content": acc_text,
+            "user_tag": user_tag
+        }).execute()
 
 # ---------- 灵魂档案表单 ----------
 st.markdown("#### 💙 留下你的灵魂片段")
