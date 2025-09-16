@@ -80,6 +80,21 @@ with st.sidebar:
     with col2:
         export = st.button("⬇️ 导出对话", use_container_width=True)
 
+    # === 用户标识（新增） ===
+    st.markdown("### 用户标识")
+    default_tag = st.session_state.get("user_email", "")
+    tag = st.text_input(
+        "填写邮箱或昵称（仅用于标记内容，不做认证）",
+        value=default_tag,
+        placeholder="例如: you@example.com",
+        key="user_email_input"
+    )
+    if tag and tag != default_tag:
+        st.session_state.user_email = tag
+        st.success(f"已更新用户标识：{tag}")
+    elif not default_tag:
+        st.caption("未设置将默认显示为 guest")
+
 # ---------- 会话状态 ----------
 if "messages" not in st.session_state or reset:
     st.session_state.messages = [{"role": "system", "content": system_prompt}]
