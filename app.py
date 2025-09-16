@@ -233,45 +233,46 @@ if user:
         placeholder.error(f"请求失败：{e}")
     acc_text = acc_text or "抱歉，我这会儿有点卡住了。稍后再试试？"
 
-    # ↓↓↓ 这一整块要与上面的 acc_text 行对齐（仍在 with st.chat_message("assistant"): 内部）
-    try:
-        emo_req = {
-            "model": model,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are an emotion classifier. Given a text, output a short label like '💙 calm' or '🔥 angry'. Respond with ONLY that label."
-                },
-                {"role": "user", "content": acc_text}
-            ],
-            "max_tokens": 10,
-            "temperature": 0.2
-        }
-        emo_res = requests.post(
-            f"{API_BASE}/chat/completions",
-            headers=headers,
-            json=emo_req,
-            timeout=60
-        ).json()
-        emotion = emo_res["choices"][0]["message"]["content"].strip()
-    except Exception:
-        emotion = "🫧 neutral"
+# === 情绪标签（与上面的 except 同级，仍在 with 块内） ===
+try:
+    emo_req = {
+        "model": model,
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are an emotion classifier. Given a text, output a short label like '💙 calm' or '🔥 angry'. Respond with ONLY that label."
+            },
+            {"role": "user", "content": acc_text}
+        ],
+        "max_tokens": 10,
+        "temperature": 0.2
+    }
+    emo_res = requests.post(
+        f"{API_BASE}/chat/completions",
+        headers=headers,
+        json=emo_req,
+        timeout=60
+    ).json()
+    emotion = emo_res["choices"][0]["message"]["content"].strip()
+except Exception:
+    emotion = "🫧 neutral"
 
-    st.sidebar.write("emotion:", emotion)  # 可留作调试
+st.sidebar.write("emotion:", emotion)  # 调试可留
 
-    # 保存 & 显示（注意：不要再保留你之前“无 emotion”的那两行，避免重复写库）
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": acc_text,
-        "emotion": emotion
-    })
-    supabase.table("messages").insert({
-        "role": "assistant",
-        "content": acc_text,
-        "emotion": emotion
-    }).execute()
+# 保存 & 显示（确保没有旧的“无 emotion”版本的两行）
+st.session_state.messages.append({
+    "role": "assistant",
+    "content": acc_text,
+    "emotion": emotion
+})
+supabase.table("messages").insert({
+    "role": "assistant",
+    "content": acc_text,
+    "emotion": emotion
+}).execute()
 
-    st.caption(emotion)
+st.caption(emotion)
+# === /情绪标签 ===
 
 # ---------- 灵魂档案表单 ----------
 st.markdown("#### 💙 留下你的灵魂片段")
