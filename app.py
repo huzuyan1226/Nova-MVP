@@ -11,14 +11,37 @@ import streamlit as st
 st.set_page_config(
     page_title="Nova Whisper Cosmos · MVP",
     page_icon="✨",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide",                      # 改成 wide
+    initial_sidebar_state="expanded"    # 强制展开 sidebar
 )
-st.sidebar.success("✅ sidebar alive")
+st.write("PAGE START ✅")
+
+# ---------- 读取 secrets ----------
+try:
+    SUPABASE_URL = st.secrets["SUPABASE_URL"]
+    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+    OPENROUTER_API_KEY = st.secrets["OPENROUTER_API_KEY"]
+    API_BASE = st.secrets.get("API_BASE_URL", "https://openrouter.ai/api/v1")
+    MODEL_DEFAULT = st.secrets.get("MODEL", "deepseek/deepseek-chat-v3.1:free")
+    APP_URL = st.secrets.get("APP_URL", "https://streamlit.io")
+    st.success("Secrets OK ✅")
+except Exception as e:
+    st.error("❌ 读取 secrets 失败")
+    st.exception(e)
+    st.stop()
 
 # ---------- 连接 Supabase ----------
-from supabase import create_client
-supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
+try:
+    from supabase import create_client
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    st.success("Supabase client OK ✅")
+except Exception as e:
+    st.error("❌ Supabase 客户端创建失败")
+    st.exception(e)
+    st.stop()
+
+# ---------- Sidebar 心跳 ----------
+st.sidebar.success("✅ sidebar alive")
 
 API_KEY  = st.secrets["OPENROUTER_API_KEY"]
 API_BASE = st.secrets.get("API_BASE_URL", "https://openrouter.ai/api/v1")
