@@ -87,23 +87,23 @@ else:
     # 保持 system 为最新
     st.session_state.messages[0]["content"] = system_prompt
 
-# ---------- 导出 ----------
+# ---------- Export ----------
 def _format_chat_as_md(msgs, proof=None):
-    lines = [f"# Nova 对话 · {datetime.now():%Y-%m-%d %H:%M}"]
+    lines = [f"# Nova Conversation · {datetime.now():%Y-%m-%d %H:%M}"]
     for m in msgs:
         if m["role"] == "system":
             continue
-        who = "你" if m["role"] == "user" else "Nova"
-        lines.append(f"\n**{who}：**\n\n{m['content']}")
+        who = "You" if m["role"] == "user" else "Nova"
+        lines.append(f"\n**{who}:**\n\n{m['content']}")
 
     if proof:
         lines.append("\n---\n")
-        lines.append(f"🪐 Nova Proof（对话凭证校验码）：\n\n`{proof}`")
+        lines.append(f"🪐 Nova Proof (Conversation Verification Code):\n\n`{proof}`")
     return "\n".join(lines)
 
 
 def make_nova_proof(msgs):
-    """生成基于 chat 内容的哈希校验码"""
+    """Generate a hash-based verification code from chat content"""
     chat_str = json.dumps(msgs, ensure_ascii=False, indent=2)
     raw = f"{chat_str}-{time.time():.0f}"
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
@@ -114,13 +114,13 @@ if export:
     md = _format_chat_as_md(st.session_state.messages, proof=proof)
 
     st.download_button(
-        "⬇️ 点击下载对话.md",
+        "⬇️ Download Conversation.md",
         data=md.encode("utf-8"),
         file_name=f"Nova_{datetime.now():%Y%m%d_%H%M}.md",
         mime="text/markdown"
     )
 
-    st.info(f"🪐 本次对话的 Nova Proof：`{proof}`")
+    st.info(f"🪐 Nova Proof for this conversation: `{proof}`")
 
 st.title("✨ Nova Whisper Cosmos · MVP")
 
@@ -129,14 +129,14 @@ for m in st.session_state.messages[1:]:
     with st.chat_message("assistant" if m["role"] == "assistant" else "user"):
         st.markdown(m["content"])
 
-# ---------- 灵魂档案展示 ----------
+# ---------- Soul Archive Display ----------
 if "soul_entries" in st.session_state and st.session_state.soul_entries:
-    st.markdown("#### 📖 已保存的灵魂片段")
-    for e in st.session_state.soul_entries[::-1]:  # 倒序显示，最新的在前面
+    st.markdown("#### 📖 Saved Soul Fragments")
+    for e in st.session_state.soul_entries[::-1]:  # show latest first
         st.markdown(f"**{e['time']}**  \n{e['text']}")
-
+        
 # ---------- 发送消息 ----------
-user = st.chat_input("把此刻的心跳，交给星空中的回应…")
+user = st.chat_input("Share your heartbeat with the stars…")
 if user:
     st.session_state.messages.append({"role": "user", "content": user})
     supabase.table("messages").insert({"role": "user", "content": user}).execute()   # 🪐 保存用户发言
@@ -230,33 +230,33 @@ if user:
 
         except Exception as e:
             if not acc_text:
-                placeholder.error(f"请求失败：{e}")
-            acc_text = acc_text or "抱歉，我这会儿有点卡住了。稍后再试试？"
+                placeholder.error(f"Request failed: {e}")
+            acc_text = acc_text or "Sorry, I'm a bit stuck right now. Please try again later."
 
         st.session_state.messages.append({"role": "assistant", "content": acc_text})
         supabase.table("messages").insert({"role": "assistant", "content": acc_text}).execute()   # 🪐 保存助手回复
 
-# ---------- 灵魂档案表单 ----------
-st.markdown("#### 💙 留下你的灵魂片段")
+# ---------- Soul Archive Form ----------
+st.markdown("#### 💙 Leave Your Soul Fragment")
 
 with st.form("soul_entry", clear_on_submit=True):
-    soul_text = st.text_input("写下此刻你想留给星空的话语…")
-    submitted = st.form_submit_button("✨ 提交到灵魂档案")
+    soul_text = st.text_input("Write the words you want to leave to the cosmos…")
+    submitted = st.form_submit_button("✨ Submit to Soul Archive")
     if submitted and soul_text.strip():
         ts = datetime.now().strftime("%Y-%m-%d %H:%M")
-        st.success(f"已保存：{soul_text[:20]}... （{ts}）")
+        st.success(f"Saved: {soul_text[:20]}... ({ts})")
 
         if "soul_entries" not in st.session_state:
             st.session_state.soul_entries = []
         st.session_state.soul_entries.append({"time": ts, "text": soul_text})
         
-# ====== 链感凭证（不上链） ======
+# ====== Off-chain Proof (verifiable, not on-chain) ======
 st.markdown("---")
-with st.expander("🔗 链感凭证（不上链，生成离线可验证 Proof）", expanded=False):
-    st.caption("生成一个包含对话指纹的离线 JSON 凭证（零 Gas、不上链、可导出/分享/校验）。")
-    gen = st.button("✨ 生成会话凭证", use_container_width=True)
+with st.expander("🔗 Off-chain Proof (generate a local, verifiable JSON)", expanded=False):
+    st.caption("Create a local JSON credential containing a chat fingerprint (zero gas, not on-chain, export/share/verify anytime).")
+    gen = st.button("✨ Generate Session Proof", use_container_width=True)
     if gen:
-        # 规范化文本（去掉 system），确保同一内容哈希一致
+        # Normalize text (exclude system) to ensure identical content → identical hash
         parts = []
         for m in st.session_state.messages:
             if m.get("role") == "system":
@@ -266,7 +266,7 @@ with st.expander("🔗 链感凭证（不上链，生成离线可验证 Proof）
             parts.append(f"{role}::{content}")
         chat_text = "\n---\n".join(parts)
 
-        import hashlib, time, json  # 再次导入以防顶部遗漏
+        import hashlib, time, json  # re-import to be safe
         sha = hashlib.sha256(chat_text.encode("utf-8")).hexdigest()
         proof = {
             "nova_proof_version": "0.1",
@@ -284,18 +284,18 @@ with st.expander("🔗 链感凭证（不上链，生成离线可验证 Proof）
         st.code(proof["chat_sha256"], language=None)
 
         st.download_button(
-            "⬇️ 下载 proof.json",
+            "⬇️ Download proof.json",
             data=json.dumps(proof, ensure_ascii=False, indent=2),
             file_name=f"nova_proof_{proof['proof_id']}.json",
             mime="application/json",
             use_container_width=True
         )
         st.download_button(
-            "⬇️ 下载 chat.txt（规范化文本）",
+            "⬇️ Download chat.txt (normalized)",
             data=chat_text.encode("utf-8"),
             file_name=f"nova_chat_{proof['proof_id']}.txt",
             mime="text/plain",
             use_container_width=True
         )
 
-        st.caption("验证方法：用相同规则（role::content 合并）重建文本并计算 SHA-256，值一致即未被篡改。")
+        st.caption("How to verify: reconstruct the text using the same rule (role::content join), compute SHA-256, and compare. If it matches, the chat is untampered.")
