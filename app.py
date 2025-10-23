@@ -12,7 +12,7 @@ st.set_page_config(page_title="Nova Whisper Cosmos · MVP", page_icon="✨", lay
 
 API_KEY  = st.secrets["OPENROUTER_API_KEY"]
 API_BASE = st.secrets.get("API_BASE_URL", "https://openrouter.ai/api/v1")
-DEFAULT_MODEL = st.secrets.get("MODEL", "deepseek/deepseek-v3-0324:free")
+DEFAULT_MODEL = st.secrets.get("MODEL", "deepseek/deepseek-chat")
 APP_URL = st.secrets.get("APP_URL", "https://streamlit.io")  # 可不填
 
 # ---------- Sidebar ----------
@@ -20,7 +20,7 @@ with st.sidebar:
     st.subheader("⚙️ Settings")
     model = st.selectbox(
         "Model",
-        options=[DEFAULT_MODEL, "deepseek/deepseek-chat"],
+        options=[DEFAULT_MODEL, "z-ai/glm-4.5-air:free"],
         index=0
     )
 
